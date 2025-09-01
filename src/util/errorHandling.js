@@ -9,6 +9,11 @@ const criticalError = (message) => {
   }
 };
 
+const errorResponse = (res, errorCode, error) => {
+  return res.status(errorCode).json(error);
+};
+
 module.exports = {
   criticalError,
+  errorResponse,
 };

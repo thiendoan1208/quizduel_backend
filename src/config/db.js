@@ -18,7 +18,7 @@ const connectToDB = async () => {
 
     console.log(`Connected to DB: ${dbName}`);
   } catch (error) {
-    criticalError(`Failed to connect to DB: ${dbName}`);
+    criticalError(`Failed to connect to DB`);
   }
 };
 
