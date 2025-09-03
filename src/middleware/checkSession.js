@@ -1,0 +1,35 @@
+const { verifyToken } = require("../config/jwt");
+const { getSession } = require("../db/users");
+const { errorResponse } = require("../util/errorHandling");
+
+const isSessionValidate = async (req, res, next) => {
+  try {
+    const session = req.cookies.sessionToken;
+    const isJWTValidate = verifyToken(session);
+
+    if (isJWTValidate) {
+      const response = await getSession(session);
+
+      if (response.status === "Valid") {
+        next();
+      } else {
+        errorResponse(res, 404, {
+          message: "Session expire.",
+        });
+      }
+    } else {
+      errorResponse(res, 404, {
+        message: "Invalid token.",
+      });
+    }
+  } catch (error) {
+    console.error(error);
+    errorResponse(res, 500, {
+      message: "Cannot get session.",
+    });
+  }
+};
+
+module.exports = {
+  isSessionValidate,
+};

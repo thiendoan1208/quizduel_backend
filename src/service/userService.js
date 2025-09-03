@@ -1,9 +1,23 @@
-const { createUserDB } = require("../db/users");
+const { createUserDB, getUserDB } = require("../db/users");
 
 const handleCreateUser = async (userInfo) => {
   try {
     const data = await createUserDB(userInfo);
-    return data;
+
+    if (data) {
+      return data;
+    }
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+const handleGetUser = async (userToken) => {
+  try {
+    const data = await getUserDB(userToken);
+    if (data) {
+      return data;
+    }
   } catch (error) {
     console.error(error);
   }
@@ -11,4 +25,5 @@ const handleCreateUser = async (userInfo) => {
 
 module.exports = {
   handleCreateUser,
+  handleGetUser,
 };
