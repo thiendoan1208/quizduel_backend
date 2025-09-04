@@ -1,5 +1,5 @@
 const { getDB } = require("../config/db");
-const { createJWT, verifyToken } = require("../config/jwt");
+const { createJWT } = require("../config/jwt");
 const { collection } = require("../db/collection_name/collection");
 
 const createUserDB = async (userInfo) => {
@@ -14,8 +14,9 @@ const createUserDB = async (userInfo) => {
     });
     if (userExist) {
       return {
+        success: false,
+        code: 400,
         message: "User already exists",
-        data: { save: userInfo.save, token: null },
       };
     }
 
@@ -26,12 +27,15 @@ const createUserDB = async (userInfo) => {
 
     if (!token) {
       return {
-        message: "Cannot create user",
-        data: { save: null, token: null },
+        success: false,
+        code: 500,
+        message: "Cannot create user token.",
       };
     }
 
-    const result = await db.collection(collection.USERS).insertOne(userInfo);
+    const result = await db
+      .collection(collection.USERS)
+      .insertOne({ ...userInfo, createDate: now });
     const userID = result.insertedId;
 
     await db.collection(collection.SESSIONS).insertOne({
@@ -43,11 +47,18 @@ const createUserDB = async (userInfo) => {
     });
 
     return {
-      message: "User created successfully",
+      success: true,
+      code: 200,
+      message: "User is created successfully.",
       data: { save: userInfo.save, token },
     };
   } catch (error) {
     console.error(error);
+    return {
+      success: false,
+      code: 200,
+      message: "Cannot create user, server error.",
+    };
   }
 };
 
@@ -62,16 +73,23 @@ const getSession = async (sessionID) => {
     if (isSessionExist) {
       return {
         message: "Session valid.",
+        code: 200,
         status: "Valid",
       };
     } else {
       return {
         message: "Session invalid.",
+        code: 404,
         status: "Invalid",
       };
     }
   } catch (error) {
     console.error(error);
+    return {
+      message: "Session invalid, server error.",
+      code: 500,
+      status: "Invalid",
+    };
   }
 };
 
@@ -99,14 +117,28 @@ const getUserDB = async (userToken) => {
       .aggregate(pipeline)
       .toArray();
 
+    if (user) {
+      return {
+        success: true,
+        message: "Get user successfully.",
+        code: 200,
+        data: {
+          user: user[0].userInfo,
+        },
+      };
+    }
     return {
-      message: "Get user successfully.",
-      data: {
-        user: user[0].userInfo,
-      },
+      success: false,
+      message: "Cannot get user, no session is found",
+      code: 404,
     };
   } catch (error) {
     console.error(error);
+    return {
+      success: false,
+      code: 500,
+      message: "Cannot get user, server error.",
+    };
   }
 };
 

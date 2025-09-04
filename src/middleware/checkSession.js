@@ -13,20 +13,14 @@ const isSessionValidate = async (req, res, next) => {
       if (response.status === "Valid") {
         next();
       } else {
-        errorResponse(res, 404, {
-          message: "Session expire.",
-        });
+        errorResponse(res, response.code, response.message);
       }
     } else {
-      errorResponse(res, 404, {
-        message: "Invalid token.",
-      });
+      errorResponse(res, 404, "Cannot verify session token.");
     }
   } catch (error) {
     console.error(error);
-    errorResponse(res, 500, {
-      message: "Cannot get session.",
-    });
+    errorResponse(res, 500, "Cannot get session, server error.");
   }
 };
 

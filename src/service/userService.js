@@ -9,6 +9,11 @@ const handleCreateUser = async (userInfo) => {
     }
   } catch (error) {
     console.error(error);
+    return {
+      success: false,
+      code: 500,
+      message: "Cannot create user, server error.",
+    };
   }
 };
 
@@ -20,6 +25,11 @@ const handleGetUser = async (userToken) => {
     }
   } catch (error) {
     console.error(error);
+    return {
+      success: false,
+      code: 500,
+      message: "Cannot get user, server error.",
+    };
   }
 };
 

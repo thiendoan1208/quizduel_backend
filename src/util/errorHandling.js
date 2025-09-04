@@ -9,8 +9,13 @@ const criticalError = (message) => {
   }
 };
 
-const errorResponse = (res, errorCode, error) => {
-  return res.status(errorCode).json(error);
+const errorResponse = (res, errorCode, message, data = null) => {
+  console.log(errorCode)
+  return res.status(Number(errorCode)).json({
+    success: false,
+    message,
+    data,
+  });
 };
 
 module.exports = {

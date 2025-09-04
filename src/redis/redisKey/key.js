@@ -1,5 +1,5 @@
 const redisKey = {
-  user: (username) => `user:${username}`,
+  waitingQueue: "waiting_queue"
 };
 
 module.exports = {
