@@ -10,7 +10,6 @@ const criticalError = (message) => {
 };
 
 const errorResponse = (res, errorCode, message, data = null) => {
-  console.log(errorCode)
   return res.status(Number(errorCode)).json({
     success: false,
     message,

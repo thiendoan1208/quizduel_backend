@@ -1,6 +1,19 @@
 const { client } = require("../../config/redis");
 
-const createJson = async (key, value, options) => {
+const setJSON = async (key, path, value, ttl) => {
   try {
-  } catch (error) {}
+    await client.json.set(key, path, value);
+    await client.expire(key, ttl);
+    return {
+      success: true,
+    };
+  } catch (error) {
+    return {
+      success: false,
+    };
+  }
+};
+
+module.exports = {
+  setJSON,
 };
