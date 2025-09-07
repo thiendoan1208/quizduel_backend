@@ -4,6 +4,7 @@ const {
   handleCancelMatchMaking,
   handleAddUserToMatch,
   handleCreateQuizByTopic,
+  handleGetEachQuiz,
 } = require("../service/gameService");
 const { errorResponse } = require("../util/errorHandling");
 const { successResponse } = require("../util/successHandling");
@@ -95,10 +96,27 @@ const createQuizByTopic = async (req, res) => {
   }
 };
 
+const getEachQuiz = async (req, res) => {
+  try {
+    const matchInfo = req.body;
+    const response = await handleGetEachQuiz(matchInfo);
+
+    if (response.success) {
+      successResponse(res, response.code, response.message, response.data);
+    } else {
+      errorResponse(res, response.code, response.message);
+    }
+  } catch (error) {
+    console.error(error);
+    errorResponse(res, 500, "Cannot get each quiz, SERVER_ERROR.");
+  }
+};
+
 module.exports = {
   addUserToWaitingQueue,
   checkEnoughUser,
   addUserToMatch,
   cancelMatchMaking,
   createQuizByTopic,
+  getEachQuiz,
 };

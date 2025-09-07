@@ -21,6 +21,31 @@ const setJSON = async (key, path, value, ttl) => {
   }
 };
 
+const getJSON = async (key) => {
+  try {
+    const data = await client.json.get(key);
+
+    if (data && data.length > 0) {
+      return {
+        success: true,
+        data,
+      };
+    }
+
+    return {
+      success: true,
+      data: null,
+    };
+  } catch (error) {
+    console.error(error);
+    return {
+      success: true,
+      data: null,
+    };
+  }
+};
+
 module.exports = {
   setJSON,
+  getJSON,
 };

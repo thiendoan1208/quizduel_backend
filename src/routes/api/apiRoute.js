@@ -6,6 +6,7 @@ const {
   cancelMatchMaking,
   addUserToMatch,
   createQuizByTopic,
+  getEachQuiz
 } = require("../../controllers/gameController");
 const { isSessionValidate } = require("../../middleware/checkSession");
 
@@ -25,6 +26,7 @@ apiRoutes.delete("/before-game/waiting-queue", cancelMatchMaking);
 // During game
 apiRoutes.post("/during-game/match", addUserToMatch);
 apiRoutes.post("/during-game/match/quiz", createQuizByTopic);
+apiRoutes.get("/during-game/match/quiz", getEachQuiz)
 
 module.exports = {
   apiRoutes,

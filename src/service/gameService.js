@@ -1,4 +1,4 @@
-const { setJSON } = require("../redis/redis/redisJSON");
+const { setJSON, getJSON } = require("../redis/redis/redisJSON");
 const {
   lPush,
   lLength,
@@ -204,10 +204,33 @@ const handleCreateQuizByTopic = async (matchInfo) => {
     };
   }
 };
+
+const handleGetEachQuiz = async (matchInfo) => {
+  try {
+    const question = await getJSON(redisKey.quiz(matchInfo.matchID));
+    if (question.data && question.data.length > 0) {
+      return {
+        success: true,
+        code: 200,
+        message: `Get question number: ${matchInfo.question - 1}.`,
+        data: question.data[matchInfo.question - 1],
+      };
+    }
+  } catch (error) {
+    console.error(error);
+    return {
+      success: false,
+      code: 500,
+      message: `Cannot get question number: ${matchInfo.question - 1}.`,
+    };
+  }
+};
+
 module.exports = {
   handleAddUserToWaitingQueue,
   handleCheckEnoughUser,
   handleCancelMatchMaking,
   handleAddUserToMatch,
   handleCreateQuizByTopic,
+  handleGetEachQuiz,
 };
