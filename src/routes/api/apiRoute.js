@@ -5,6 +5,7 @@ const {
   checkEnoughUser,
   cancelMatchMaking,
   addUserToMatch,
+  createQuizByTopic,
 } = require("../../controllers/gameController");
 const { isSessionValidate } = require("../../middleware/checkSession");
 
@@ -19,16 +20,12 @@ apiRoutes.get("/user", isSessionValidate, getUser);
 // Before game
 apiRoutes.post("/before-game/waiting-queue", addUserToWaitingQueue);
 apiRoutes.get("/before-game/waiting-queue", checkEnoughUser);
-apiRoutes.delete("/before-game/waiting-queue", cancelMatchMaking)
+apiRoutes.delete("/before-game/waiting-queue", cancelMatchMaking);
 
 // During game
 apiRoutes.post("/during-game/match", addUserToMatch);
+apiRoutes.post("/during-game/match/quiz", createQuizByTopic);
 
 module.exports = {
   apiRoutes,
 };
-
-
-// ttl match
-// remove specify user if they cancel > DELETE
-

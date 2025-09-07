@@ -3,6 +3,7 @@ const {
   handleCheckEnoughUser,
   handleCancelMatchMaking,
   handleAddUserToMatch,
+  handleCreateQuizByTopic,
 } = require("../service/gameService");
 const { errorResponse } = require("../util/errorHandling");
 const { successResponse } = require("../util/successHandling");
@@ -10,8 +11,8 @@ const { successResponse } = require("../util/successHandling");
 // Before game
 const addUserToWaitingQueue = async (req, res) => {
   try {
-    const userTopic = req.body;
-    const response = await handleAddUserToWaitingQueue(userTopic);
+    const userInfo = req.body;
+    const response = await handleAddUserToWaitingQueue(userInfo);
 
     if (response.success) {
       successResponse(res, response.code, response.message);
@@ -27,7 +28,7 @@ const addUserToWaitingQueue = async (req, res) => {
 const checkEnoughUser = async (req, res) => {
   try {
     const response = await handleCheckEnoughUser();
-    if (response.sucess) {
+    if (response.success) {
       successResponse(res, response.code, response.message, response.user);
     } else {
       errorResponse(res, response.code, response.message);
@@ -47,7 +48,7 @@ const cancelMatchMaking = async (req, res) => {
     const userInfo = req.body;
     const response = await handleCancelMatchMaking(userInfo);
 
-    if (response.sucess) {
+    if (response.success) {
       successResponse(res, response.code, response.message);
     } else {
       errorResponse(res, response.code, response.message);
@@ -67,8 +68,8 @@ const addUserToMatch = async (req, res) => {
   try {
     const response = await handleAddUserToMatch();
 
-    if (response.sucess) {
-      successResponse(res, response.code, response.message);
+    if (response.success) {
+      successResponse(res, response.code, response.message, response.data);
     } else {
       errorResponse(res, response.code, response.message);
     }
@@ -78,9 +79,26 @@ const addUserToMatch = async (req, res) => {
   }
 };
 
+const createQuizByTopic = async (req, res) => {
+  try {
+    const matchInfo = req.body;
+    const response = await handleCreateQuizByTopic(matchInfo);
+
+    if (response.success) {
+      successResponse(res, response.code, response.message, response.data);
+    } else {
+      errorResponse(res, response.code, response.message);
+    }
+  } catch (error) {
+    console.error(error);
+    errorResponse(res, 500, "Cannot get quiz, SERVER_ERROR.");
+  }
+};
+
 module.exports = {
   addUserToWaitingQueue,
   checkEnoughUser,
   addUserToMatch,
   cancelMatchMaking,
+  createQuizByTopic,
 };

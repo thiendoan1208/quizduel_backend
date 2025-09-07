@@ -6,15 +6,18 @@ const {
   lRem,
 } = require("../redis/redis/redisLIST");
 const { redisKey } = require("../redis/redisKey/key");
+const { openAI } = require("../config/openai");
+const { generatePrompt } = require("../util/prompt");
+const { addQuizDB, checkQuiz } = require("../db/quizes");
 
 // Before game
-const handleAddUserToWaitingQueue = async (userTopic) => {
+const handleAddUserToWaitingQueue = async (userInfo) => {
   const EXPIRE_TIME = 30 * 60;
 
   try {
     const response = await lPush(
       redisKey.waitingQueue,
-      JSON.stringify(userTopic),
+      JSON.stringify(userInfo),
       EXPIRE_TIME
     );
 
@@ -47,7 +50,7 @@ const handleCheckEnoughUser = async () => {
 
     if (data.success) {
       return {
-        sucess: true,
+        success: true,
         code: 200,
         message: "Get amount of user in waiting queue successfully.",
         user: data.user,
@@ -55,14 +58,14 @@ const handleCheckEnoughUser = async () => {
     }
 
     return {
-      sucess: false,
+      success: false,
       code: 500,
       message: "Cannot get amount of user in waiting queue.",
     };
   } catch (error) {
     console.error(error);
     return {
-      sucess: false,
+      success: false,
       code: 500,
       message: "Cannot get amount of user in waiting queue.",
     };
@@ -76,13 +79,13 @@ const handleCancelMatchMaking = async (userInfo) => {
 
     if (data.success) {
       return {
-        sucess: true,
+        success: true,
         code: 200,
         message: "Canceled match making.",
       };
     } else {
       return {
-        sucess: false,
+        success: false,
         code: 500,
         message: "An error ocurd while canceling match.",
       };
@@ -90,7 +93,7 @@ const handleCancelMatchMaking = async (userInfo) => {
   } catch (error) {
     console.error(error);
     return {
-      sucess: false,
+      success: false,
       code: 500,
       message: "An error ocurd while canceling match.",
     };
@@ -126,13 +129,16 @@ const handleAddUserToMatch = async () => {
         await setJSON(redisKey.match(matchID), "$", users, MATCH_CACHE_TIME);
 
         return {
-          sucess: true,
+          success: true,
           code: 200,
           message: "Added user to match.",
+          data: {
+            matchID,
+          },
         };
       } else {
         return {
-          sucess: false,
+          success: false,
           code: 500,
           message: "Cannot add user to match.",
         };
@@ -140,7 +146,7 @@ const handleAddUserToMatch = async () => {
     }
 
     return {
-      sucess: false,
+      success: false,
       code: 422,
       message:
         "The amount of user left is not engouh to make a match, min is 2.",
@@ -148,16 +154,60 @@ const handleAddUserToMatch = async () => {
   } catch (error) {
     console.error(error);
     return {
-      sucess: false,
+      success: false,
       code: 500,
       message: "Cannot add user to match.",
     };
   }
 };
 
+const handleCreateQuizByTopic = async (matchInfo) => {
+  try {
+    const QUIZ_CACHE_TIME = 45 * 60;
+    const NUM_QUESTION = 1;
+    const TOPIC = matchInfo.topic;
+    const LANGUAGE = "Vietnamese";
+
+    const prompt = generatePrompt(NUM_QUESTION, TOPIC, LANGUAGE);
+
+    const reply = await openAI(prompt);
+
+    if (reply.data !== null) {
+      await setJSON(
+        redisKey.quiz(matchInfo.matchID),
+        "$",
+        ...reply.data,
+        QUIZ_CACHE_TIME
+      );
+
+      for (let i = 0; i < reply.data.length; i++) {
+        const quizes = await checkQuiz(reply.data[i].question);
+
+        if (quizes.data === null) {
+          await addQuizDB(reply.data);
+        }
+      }
+
+      return {
+        success: true,
+        code: 200,
+        message: "Quiz is created.",
+        data: reply.data,
+      };
+    }
+  } catch (error) {
+    console.error(error);
+    return {
+      success: false,
+      code: 500,
+      message: "Cannot get quiz.",
+    };
+  }
+};
 module.exports = {
   handleAddUserToWaitingQueue,
   handleCheckEnoughUser,
   handleCancelMatchMaking,
   handleAddUserToMatch,
+  handleCreateQuizByTopic,
 };
