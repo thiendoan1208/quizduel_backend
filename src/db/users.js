@@ -12,11 +12,16 @@ const createUserDB = async (userInfo) => {
     const userExist = await db.collection(collection.USERS).findOne({
       name: userInfo.name,
     });
+
     if (userExist) {
       return {
-        success: false,
-        code: 400,
-        message: "User already exists",
+        success: true,
+        code: 200,
+        data: {
+          save: false,
+          token: null,
+        },
+        message: "Người dùng đã tồn tại.",
       };
     }
 
@@ -29,7 +34,7 @@ const createUserDB = async (userInfo) => {
       return {
         success: false,
         code: 500,
-        message: "Cannot create user token.",
+        message: "Không tạo được user token.",
       };
     }
 
@@ -49,15 +54,15 @@ const createUserDB = async (userInfo) => {
     return {
       success: true,
       code: 200,
-      message: "User is created successfully.",
+      message: "Tạo user thành công.",
       data: { save: userInfo.save, token },
     };
   } catch (error) {
     console.error(error);
     return {
       success: false,
-      code: 200,
-      message: "Cannot create user, server error.",
+      code: 500,
+      message: "Lỗi server, không tạo được user.",
     };
   }
 };

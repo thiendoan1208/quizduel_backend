@@ -6,7 +6,7 @@ const {
   cancelMatchMaking,
   addUserToMatch,
   createQuizByTopic,
-  getEachQuiz
+  getEachQuiz,
 } = require("../../controllers/gameController");
 const { isSessionValidate } = require("../../middleware/checkSession");
 
@@ -15,6 +15,7 @@ const apiRoutes = express.Router();
 // user
 apiRoutes.post("/user", createNewUser);
 apiRoutes.get("/user", isSessionValidate, getUser);
+// Delete user ngay khi user thoát nếu k lưu
 
 /* Gameplay */
 
@@ -26,7 +27,7 @@ apiRoutes.delete("/before-game/waiting-queue", cancelMatchMaking);
 // During game
 apiRoutes.post("/during-game/match", addUserToMatch);
 apiRoutes.post("/during-game/match/quiz", createQuizByTopic);
-apiRoutes.get("/during-game/match/quiz", getEachQuiz)
+apiRoutes.get("/during-game/match/quiz", getEachQuiz);
 
 module.exports = {
   apiRoutes,

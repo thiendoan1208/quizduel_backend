@@ -10,14 +10,10 @@ const createNewUser = async (req, res) => {
     const userInfo = req.body;
     const response = await handleCreateUser(userInfo);
 
-    if (!response.success) {
-      errorResponse(res, response.code, response.message);
-    }
-
     if (
       response.success &&
       response.data.save === true &&
-      response.data.token
+      response.data.token !== null
     ) {
       res.cookie("sessionToken", response.data.token, {
         httpOnly: true,
@@ -26,16 +22,23 @@ const createNewUser = async (req, res) => {
     } else if (
       response.success &&
       response.data.save === false &&
-      response.data.token
+      response.data.token !== null
     ) {
       res.cookie("sessionToken", response.data.token, {
         httpOnly: true,
       });
     }
-    successResponse(res, response.code, response.message, response.data);
+
+    if (!response.success) {
+      errorResponse(res, response.code, response.message);
+    }
+
+    if (response.success) {
+      successResponse(res, response.code, response.message);
+    }
   } catch (error) {
     console.error(error);
-    errorResponse(res, 500, "Cannot create user, server error.");
+    errorResponse(res, 500, "Không thể kết nối đến server.");
   }
 };
 
@@ -43,7 +46,7 @@ const getUser = async (req, res) => {
   try {
     const userToken = req.cookies.sessionToken;
     const response = await handleGetUser(userToken);
- 
+
     if (!response.success) {
       errorResponse(res, response.code, response.message);
     }
