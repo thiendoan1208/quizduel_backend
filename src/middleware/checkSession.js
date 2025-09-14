@@ -2,6 +2,7 @@ const { verifyToken } = require("../config/jwt");
 const { getSession } = require("../db/users");
 const { errorResponse } = require("../util/errorHandling");
 
+
 const isSessionValidate = async (req, res, next) => {
   try {
     const session = req.cookies.sessionToken;
@@ -16,11 +17,11 @@ const isSessionValidate = async (req, res, next) => {
         errorResponse(res, response.code, response.message);
       }
     } else {
-      errorResponse(res, 404, "Cannot verify session token.");
+      errorResponse(res, 400, "Tài khoản không hợp lệ.");
     }
   } catch (error) {
     console.error(error);
-    errorResponse(res, 500, "Cannot get session, server error.");
+    errorResponse(res, 500, "không lấy được thông tin tài khoản, lỗi server.");
   }
 };
 

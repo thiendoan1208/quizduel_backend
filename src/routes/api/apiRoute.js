@@ -1,5 +1,9 @@
 const express = require("express");
-const { createNewUser, getUser } = require("../../controllers/userController");
+const {
+  createNewUser,
+  loginUser,
+  getUser,
+} = require("../../controllers/userController");
 const {
   addUserToWaitingQueue,
   checkEnoughUser,
@@ -14,8 +18,8 @@ const apiRoutes = express.Router();
 
 // user
 apiRoutes.post("/user", createNewUser);
+apiRoutes.post("/user/login", loginUser);
 apiRoutes.get("/user", isSessionValidate, getUser);
-// Delete user ngay khi user thoát nếu k lưu
 
 /* Gameplay */
 

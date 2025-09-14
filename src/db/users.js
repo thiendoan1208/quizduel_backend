@@ -1,6 +1,7 @@
 const { getDB } = require("../config/db");
 const { createJWT } = require("../config/jwt");
 const { collection } = require("../db/collection_name/collection");
+const { v4 } = require("uuid");
 
 const createUserDB = async (userInfo) => {
   try {
@@ -15,20 +16,20 @@ const createUserDB = async (userInfo) => {
 
     if (userExist) {
       return {
-        success: true,
-        code: 200,
-        data: {
-          save: false,
-          token: null,
-        },
+        success: false,
+        code: 400,
         message: "Người dùng đã tồn tại.",
       };
     }
 
+    // create JWT Token
     const token = createJWT(
       { username: userInfo.name },
       { expiresIn: oneYearSec }
     );
+
+    // create UUID for Signin
+    const loginSecret = v4().replaceAll("-", "");
 
     if (!token) {
       return {
@@ -38,15 +39,16 @@ const createUserDB = async (userInfo) => {
       };
     }
 
-    const result = await db
-      .collection(collection.USERS)
-      .insertOne({ ...userInfo, createDate: now });
+    const result = await db.collection(collection.USERS).insertOne({
+      ...userInfo,
+      loginSecret: loginSecret,
+      createDate: now,
+    });
     const userID = result.insertedId;
 
     await db.collection(collection.SESSIONS).insertOne({
       userID,
       sessionID: token,
-      save: userInfo.save,
       createdAt: now,
       expiresAt: new Date(now.getTime() + oneYearMs),
     });
@@ -55,7 +57,7 @@ const createUserDB = async (userInfo) => {
       success: true,
       code: 200,
       message: "Tạo user thành công.",
-      data: { save: userInfo.save, token },
+      data: { userInfo, loginSecret: loginSecret, token },
     };
   } catch (error) {
     console.error(error);
@@ -63,6 +65,54 @@ const createUserDB = async (userInfo) => {
       success: false,
       code: 500,
       message: "Lỗi server, không tạo được user.",
+    };
+  }
+};
+
+const loginUserDB = async (userInfo) => {
+  try {
+    const db = getDB();
+    const now = new Date();
+    const oneYearMs = 365 * 24 * 60 * 60 * 1000;
+    const oneYearSec = 365 * 24 * 60 * 60;
+
+    const user = await db.collection(collection.USERS).findOne({
+      name: userInfo.name,
+    });
+
+    if (user && userInfo.loginSecret === user.loginSecret) {
+      // create JWT Token
+      const token = createJWT(
+        { username: userInfo.name },
+        { expiresIn: oneYearSec }
+      );
+
+      await db.collection(collection.SESSIONS).insertOne({
+        userID: user._id,
+        sessionID: token,
+        createdAt: now,
+        expiresAt: new Date(now.getTime() + oneYearMs),
+      });
+
+      return {
+        success: true,
+        code: 200,
+        message: "Đăng nhập thành công.",
+        token,
+      };
+    } else {
+      return {
+        success: false,
+        code: 404,
+        message: "Thông tin đăng nhập không chính xác.",
+      };
+    }
+  } catch (error) {
+    console.error(error);
+    return {
+      success: false,
+      code: 500,
+      message: "Lỗi server, không đăng nhập được.",
     };
   }
 };
@@ -125,7 +175,7 @@ const getUserDB = async (userToken) => {
     if (user) {
       return {
         success: true,
-        message: "Get user successfully.",
+        message: "Lấy user thành công.",
         code: 200,
         data: {
           user: user[0].userInfo,
@@ -134,7 +184,7 @@ const getUserDB = async (userToken) => {
     }
     return {
       success: false,
-      message: "Cannot get user, no session is found",
+      message: "Không có session token",
       code: 404,
     };
   } catch (error) {
@@ -142,13 +192,37 @@ const getUserDB = async (userToken) => {
     return {
       success: false,
       code: 500,
-      message: "Cannot get user, server error.",
+      message: "Không lấy được user, lỗi server.",
     };
+  }
+};
+
+const deleteUser = async (userToken) => {
+  try {
+    let db = getDB();
+
+    if (userToken) {
+      const userSession = await db.collection(collection.SESSIONS).findOne({
+        sessionID: userToken,
+      });
+
+      await db.collection(collection.USERS).deleteOne({
+        _id: userSession.userID,
+      });
+
+      await db.collection(collection.SESSIONS).deleteOne({
+        sessionID: userToken,
+      });
+    }
+  } catch (error) {
+    console.error(error);
   }
 };
 
 module.exports = {
   createUserDB,
+  loginUserDB,
   getSession,
   getUserDB,
+  deleteUser,
 };
