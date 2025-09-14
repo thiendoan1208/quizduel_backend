@@ -2,7 +2,9 @@ const express = require("express");
 const {
   createNewUser,
   loginUser,
+  logoutUser,
   getUser,
+  deleteUser
 } = require("../../controllers/userController");
 const {
   addUserToWaitingQueue,
@@ -19,7 +21,9 @@ const apiRoutes = express.Router();
 // user
 apiRoutes.post("/user", createNewUser);
 apiRoutes.post("/user/login", loginUser);
+apiRoutes.post("/user/logout", logoutUser);
 apiRoutes.get("/user", isSessionValidate, getUser);
+apiRoutes.delete("/user", deleteUser)
 
 /* Gameplay */
 

@@ -17,7 +17,7 @@ const isSessionValidate = async (req, res, next) => {
         errorResponse(res, response.code, response.message);
       }
     } else {
-      errorResponse(res, 400, "Tài khoản không hợp lệ.");
+      errorResponse(res, 200, "Tài khoản không hợp lệ.");
     }
   } catch (error) {
     console.error(error);

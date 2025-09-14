@@ -1,4 +1,4 @@
-const { createUserDB, getUserDB, loginUserDB } = require("../db/users");
+const { createUserDB, getUserDB, loginUserDB, logoutUserDB, deleteUserDB } = require("../db/users");
 
 const handleCreateUser = async (userInfo) => {
   try {
@@ -22,9 +22,31 @@ const handleLoginUser = async (userInfo) => {
   }
 };
 
+const handleLogoutUser = async (sessionToken) => {
+  try {
+    const data = await logoutUserDB(sessionToken);
+    if (data) {
+      return data;
+    }
+  } catch (error) {
+    console.error(error);
+  }
+};
+
 const handleGetUser = async (userToken) => {
   try {
     const data = await getUserDB(userToken);
+    if (data) {
+      return data;
+    }
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+const handleDeleteUser = async (username, sessionToken) => {
+  try {
+    const data = await deleteUserDB(username, sessionToken);
     if (data) {
       return data;
     }
@@ -37,4 +59,6 @@ module.exports = {
   handleCreateUser,
   handleGetUser,
   handleLoginUser,
+  handleLogoutUser,
+  handleDeleteUser
 };

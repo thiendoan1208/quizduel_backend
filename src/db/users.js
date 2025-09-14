@@ -117,6 +117,41 @@ const loginUserDB = async (userInfo) => {
   }
 };
 
+const logoutUserDB = async (sessionToken) => {
+  try {
+    let db = getDB();
+
+    const isSessionExist = await db.collection(collection.SESSIONS).findOne({
+      sessionID: sessionToken,
+    });
+
+    if (isSessionExist) {
+      await db.collection(collection.SESSIONS).deleteOne({
+        sessionID: sessionToken,
+      });
+
+      return {
+        success: true,
+        message: "Đã đăng xuất.",
+        code: 200,
+      };
+    } else {
+      return {
+        success: false,
+        message: "Lỗi không thể đăng xuất.",
+        code: 404,
+      };
+    }
+  } catch (error) {
+    console.error(error);
+    return {
+      success: false,
+      code: 500,
+      message: "Lỗi server, không đăng xuẩt được.",
+    };
+  }
+};
+
 const getSession = async (sessionID) => {
   try {
     let db = getDB();
@@ -197,25 +232,38 @@ const getUserDB = async (userToken) => {
   }
 };
 
-const deleteUser = async (userToken) => {
+const deleteUserDB = async (username, sessionToken) => {
   try {
     let db = getDB();
 
-    if (userToken) {
-      const userSession = await db.collection(collection.SESSIONS).findOne({
-        sessionID: userToken,
-      });
-
+    if (username && sessionToken) {
       await db.collection(collection.USERS).deleteOne({
-        _id: userSession.userID,
+        name: username,
       });
 
       await db.collection(collection.SESSIONS).deleteOne({
-        sessionID: userToken,
+        sessionID: sessionToken,
       });
+
+      return {
+        success: true,
+        code: 200,
+        message: "Dã xóa tài khoản.",
+      };
     }
+
+    return {
+      success: false,
+      code: 404,
+      message: "Không lấy được thông tin user.",
+    };
   } catch (error) {
     console.error(error);
+    return {
+      success: false,
+      code: 500,
+      message: "Không xóa được user, lỗi server.",
+    };
   }
 };
 
@@ -224,5 +272,6 @@ module.exports = {
   loginUserDB,
   getSession,
   getUserDB,
-  deleteUser,
+  logoutUserDB,
+  deleteUserDB,
 };
