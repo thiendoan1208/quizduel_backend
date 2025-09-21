@@ -4,7 +4,7 @@ const {
   loginUser,
   logoutUser,
   getUser,
-  deleteUser
+  deleteUser,
 } = require("../../controllers/userController");
 const {
   addUserToWaitingQueue,
@@ -14,16 +14,21 @@ const {
   createQuizByTopic,
   getEachQuiz,
 } = require("../../controllers/gameController");
+const { getTopic, findTopic } = require("../../controllers/topicController");
 const { isSessionValidate } = require("../../middleware/checkSession");
 
 const apiRoutes = express.Router();
 
-// user
+/* User */
 apiRoutes.post("/user", createNewUser);
 apiRoutes.post("/user/login", loginUser);
 apiRoutes.post("/user/logout", logoutUser);
 apiRoutes.get("/user", isSessionValidate, getUser);
-apiRoutes.delete("/user", deleteUser)
+apiRoutes.delete("/user", deleteUser);
+
+/* Topic */
+apiRoutes.get("/topic", getTopic),
+apiRoutes.post("/topic", findTopic)
 
 /* Gameplay */
 

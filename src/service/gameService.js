@@ -164,7 +164,7 @@ const handleAddUserToMatch = async () => {
 const handleCreateQuizByTopic = async (matchInfo) => {
   try {
     const QUIZ_CACHE_TIME = 45 * 60;
-    const NUM_QUESTION = 1;
+    const NUM_QUESTION = 2;
     const TOPIC = matchInfo.topic;
     const LANGUAGE = "Vietnamese";
 
