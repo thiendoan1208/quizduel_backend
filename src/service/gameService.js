@@ -4,6 +4,7 @@ const {
   lLength,
   lRemoveMutliple,
   lRem,
+  lRange,
 } = require("../redis/redis/redisLIST");
 const { redisKey } = require("../redis/redisKey/key");
 const { openAI } = require("../config/openai");
@@ -47,13 +48,24 @@ const handleAddUserToWaitingQueue = async (userInfo) => {
 const handleCheckEnoughUser = async () => {
   try {
     const data = await lLength(redisKey.waitingQueue);
+    const users = await lRange(redisKey.waitingQueue, 0, 1);
+    let arrUsers = [];
+
+    if (users && users.success && users.data.length > 0) {
+      users.data.forEach((element) => {
+        arrUsers.push(JSON.parse(element));
+      });
+    }
 
     if (data.success) {
       return {
         success: true,
         code: 200,
         message: "Get amount of user in waiting queue successfully.",
-        user: data.user,
+        user: {
+          numberOfUserIsWaiting: data,
+          matchUsers: arrUsers,
+        },
       };
     }
 

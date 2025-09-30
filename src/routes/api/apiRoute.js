@@ -37,6 +37,9 @@ apiRoutes.post("/before-game/waiting-queue", addUserToWaitingQueue);
 apiRoutes.get("/before-game/waiting-queue", checkEnoughUser);
 apiRoutes.delete("/before-game/waiting-queue", cancelMatchMaking);
 
+// sendBeacon
+apiRoutes.post("/before-game/waiting-queue/cancel", express.text(), cancelMatchMaking);
+
 // During game
 apiRoutes.post("/during-game/match", addUserToMatch);
 apiRoutes.post("/during-game/match/quiz", createQuizByTopic);

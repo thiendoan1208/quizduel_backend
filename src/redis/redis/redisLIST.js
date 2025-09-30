@@ -15,6 +15,21 @@ const lPush = async (key, element, ttl) => {
   }
 };
 
+const lRange = async (key, start, stop) => {
+  try {
+    const data = await client.lRange(key, start, stop);
+    return {
+      success: true,
+      data,
+    };
+  } catch (error) {
+    console.error(error);
+    return {
+      success: false,
+    };
+  }
+};
+
 const lLength = async (key) => {
   try {
     const data = await client.lLen(key);
@@ -73,4 +88,5 @@ module.exports = {
   lLength,
   lRemoveMutliple,
   lRem,
+  lRange,
 };

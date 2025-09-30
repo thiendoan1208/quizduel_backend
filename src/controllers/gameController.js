@@ -46,13 +46,25 @@ const checkEnoughUser = async (req, res) => {
 
 const cancelMatchMaking = async (req, res) => {
   try {
-    const userInfo = req.body;
-    const response = await handleCancelMatchMaking(userInfo);
+    if (typeof req.body === "string") {
+      const userInfo = JSON.parse(req.body);
 
-    if (response.success) {
-      successResponse(res, response.code, response.message);
+      const response = await handleCancelMatchMaking(userInfo);
+
+      if (response.success) {
+        successResponse(res, response.code, response.message);
+      } else {
+        errorResponse(res, response.code, response.message);
+      }
     } else {
-      errorResponse(res, response.code, response.message);
+      const userInfo = req.body;
+      const response = await handleCancelMatchMaking(userInfo);
+
+      if (response.success) {
+        successResponse(res, response.code, response.message);
+      } else {
+        errorResponse(res, response.code, response.message);
+      }
     }
   } catch (error) {
     console.error(error);
