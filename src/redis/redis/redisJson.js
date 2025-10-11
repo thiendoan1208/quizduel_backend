@@ -45,7 +45,28 @@ const getJSON = async (key) => {
   }
 };
 
+const delJSON = async (key) => {
+  try {
+    const data = await client.json.del(key, "$");
+    if (data) {
+      return {
+        success: true,
+        message: "Deleted",
+      };
+    }
+    return {
+      success: false,
+    };
+  } catch (error) {
+    console.error(error);
+    return {
+      success: false,
+    };
+  }
+};
+
 module.exports = {
   setJSON,
   getJSON,
+  delJSON,
 };

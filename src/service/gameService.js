@@ -1,4 +1,4 @@
-const { setJSON, getJSON } = require("../redis/redis/redisJSON");
+const { setJSON, getJSON, delJSON } = require("../redis/redis/redisJSON");
 const {
   lPush,
   lLength,
@@ -10,6 +10,23 @@ const { redisKey } = require("../redis/redisKey/key");
 const { openAI } = require("../config/openai");
 const { generatePrompt } = require("../util/prompt");
 const { addQuizDB, checkQuiz } = require("../db/quizes");
+const { createJWT } = require("../config/jwt");
+const Redis = require("ioredis");
+const Redlock = require("redlock").default;
+const { config } = require("dotenv");
+config();
+
+const redis = new Redis({
+  host: process.env.REDIS_HOST,
+  port: process.env.REDIS_PORT,
+  password: process.env.REDIS_PASSWORD,
+});
+
+const redlock = new Redlock([redis], {
+  driftFactor: 0.01,
+  retryCount: 3,
+  retryDelay: 200,
+});
 
 // Before game
 const handleAddUserToWaitingQueue = async (userInfo) => {
@@ -112,56 +129,90 @@ const handleCancelMatchMaking = async (userInfo) => {
   }
 };
 
-// During game
+const handleAddUserToMatch = async (user) => {
+  const lockKey = "lock:waiting_queue";
+  const lock = await redlock.acquire([lockKey], 2000);
 
-const handleAddUserToMatch = async () => {
   try {
     const MATCH_CACHE_TIME = 30 * 60;
     const USER_EACH_MATCH = 2;
     const users = [];
-    let matchID = "";
 
     const userInQueue = await lLength(redisKey.waitingQueue);
+    const userMatchInfo = await getJSON(redisKey.userMatch(user.username));
 
-    if (Number(userInQueue.user) >= USER_EACH_MATCH) {
-      const data = await lRemoveMutliple(
-        redisKey.waitingQueue,
-        USER_EACH_MATCH
+    if (userMatchInfo.data !== null) {
+      const matchInfo = await getJSON(
+        redisKey.match(userMatchInfo.data[0].matchID)
+      );
+      const jwtToken = createJWT(
+        { matchID: userMatchInfo.data[0].matchID },
+        { expiresIn: "1h" }
       );
 
-      if (data.success) {
-        for (let i = 0; i < USER_EACH_MATCH; i++) {
-          users[i] = JSON.parse(data.data[i]);
+      return {
+        success: true,
+        code: 200,
+        message: "Match is existed.",
+        data: {
+          matchID: userMatchInfo.data[0].matchID,
+          users: matchInfo.data[0],
+        },
+        jwt: jwtToken,
+      };
+    } else {
+      if (Number(userInQueue.user) >= USER_EACH_MATCH) {
+        const data = await lRemoveMutliple(
+          redisKey.waitingQueue,
+          USER_EACH_MATCH
+        );
+
+        if (data.success && data.data.length === USER_EACH_MATCH) {
+          for (let i = 0; i < USER_EACH_MATCH; i++) {
+            users[i] = JSON.parse(data.data[i]);
+          }
+
+          const matchID = users.map((u) => u.userInfo.name).join("_");
+
+          await setJSON(redisKey.match(matchID), "$", users, MATCH_CACHE_TIME);
+
+          for (let i = 0; i < USER_EACH_MATCH; i++) {
+            await setJSON(
+              redisKey.userMatch(users[i].userInfo.name),
+              "$",
+              {
+                matchID,
+              },
+              MATCH_CACHE_TIME
+            );
+          }
+
+          const jwtToken = createJWT({ matchID }, { expiresIn: "1h" });
+
+          return {
+            success: true,
+            code: 200,
+            message: "Added user to match.",
+            data: {
+              matchID,
+              users,
+            },
+            jwt: jwtToken,
+          };
+        } else {
+          return {
+            success: false,
+            code: 500,
+            message: "Not enough users removed from queue to form a match.",
+          };
         }
-
-        matchID = `${users[USER_EACH_MATCH - USER_EACH_MATCH].userInfo.name}_${
-          users[USER_EACH_MATCH - 1].userInfo.name
-        }`;
-
-        await setJSON(redisKey.match(matchID), "$", users, MATCH_CACHE_TIME);
-
-        return {
-          success: true,
-          code: 200,
-          message: "Added user to match.",
-          data: {
-            matchID,
-          },
-        };
-      } else {
-        return {
-          success: false,
-          code: 500,
-          message: "Cannot add user to match.",
-        };
       }
     }
 
     return {
       success: false,
       code: 422,
-      message:
-        "The amount of user left is not engouh to make a match, min is 2.",
+      message: "No valid match found.",
     };
   } catch (error) {
     console.error(error);
@@ -170,9 +221,39 @@ const handleAddUserToMatch = async () => {
       code: 500,
       message: "Cannot add user to match.",
     };
+  } finally {
+    await lock.release();
   }
 };
 
+const handleDeleteMatch = async (user) => {
+  try {
+    await delJSON(redisKey.match(user.matchID));
+    const userMatchRes = await delJSON(redisKey.userMatch(user.username));
+    if (userMatchRes.success) {
+      return {
+        success: true,
+        code: 200,
+        message: "Deleted.",
+      };
+    } else {
+      return {
+        success: false,
+        code: 404,
+        message: "Nothing to delete.",
+      };
+    }
+  } catch (error) {
+    console.error(error);
+    return {
+      success: false,
+      code: 500,
+      message: "Cannot delete user, server error.",
+    };
+  }
+};
+
+// During game
 const handleCreateQuizByTopic = async (matchInfo) => {
   try {
     const QUIZ_CACHE_TIME = 45 * 60;
@@ -243,6 +324,7 @@ module.exports = {
   handleCheckEnoughUser,
   handleCancelMatchMaking,
   handleAddUserToMatch,
+  handleDeleteMatch,
   handleCreateQuizByTopic,
   handleGetEachQuiz,
 };
