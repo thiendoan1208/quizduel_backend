@@ -5,7 +5,6 @@ const setJSON = async (key, path, value, ttl) => {
     const isKeyExist = await client.exists(key);
     if (isKeyExist === 0) {
       await client.json.set(key, path, []);
-
       await client.json.arrAppend(key, path, value);
       await client.expire(key, ttl);
     } else {
@@ -64,6 +63,7 @@ const delJSON = async (key) => {
     };
   }
 };
+
 
 module.exports = {
   setJSON,

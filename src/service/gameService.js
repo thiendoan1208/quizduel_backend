@@ -257,19 +257,18 @@ const handleDeleteMatch = async (user) => {
 const handleCreateQuizByTopic = async (matchInfo) => {
   try {
     const QUIZ_CACHE_TIME = 45 * 60;
-    const NUM_QUESTION = 2;
+    const NUM_QUESTION = 5;
     const TOPIC = matchInfo.topic;
     const LANGUAGE = "Vietnamese";
 
     const prompt = generatePrompt(NUM_QUESTION, TOPIC, LANGUAGE);
-
     const reply = await openAI(prompt);
 
     if (reply.data !== null) {
       await setJSON(
         redisKey.quiz(matchInfo.matchID),
         "$",
-        ...reply.data,
+        reply.data,
         QUIZ_CACHE_TIME
       );
 
