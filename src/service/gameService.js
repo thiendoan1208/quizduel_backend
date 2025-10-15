@@ -14,6 +14,7 @@ const { createJWT } = require("../config/jwt");
 const Redis = require("ioredis");
 const Redlock = require("redlock").default;
 const { config } = require("dotenv");
+
 config();
 
 const redis = new Redis({
@@ -257,11 +258,11 @@ const handleDeleteMatch = async (user) => {
 const handleCreateQuizByTopic = async (matchInfo) => {
   try {
     const QUIZ_CACHE_TIME = 45 * 60;
-    const NUM_QUESTION = 5;
+    const TOTAL_QUES = 4;
     const TOPIC = matchInfo.topic;
     const LANGUAGE = "Vietnamese";
 
-    const prompt = generatePrompt(NUM_QUESTION, TOPIC, LANGUAGE);
+    const prompt = generatePrompt(TOTAL_QUES / 2, TOPIC, LANGUAGE);
     const reply = await openAI(prompt);
 
     if (reply.data !== null) {
@@ -284,7 +285,6 @@ const handleCreateQuizByTopic = async (matchInfo) => {
         success: true,
         code: 200,
         message: "Quiz is created.",
-        data: reply.data,
       };
     }
   } catch (error) {
@@ -300,12 +300,18 @@ const handleCreateQuizByTopic = async (matchInfo) => {
 const handleGetEachQuiz = async (matchInfo) => {
   try {
     const question = await getJSON(redisKey.quiz(matchInfo.matchID));
+
     if (question.data && question.data.length > 0) {
+      let fullQues = question.data.flat(1);
       return {
         success: true,
         code: 200,
-        message: `Get question number: ${matchInfo.question - 1}.`,
-        data: question.data[matchInfo.question - 1],
+        message: `Get question number: ${matchInfo.question}.`,
+        data: {
+          question: fullQues[matchInfo.question - 1],
+          questionNum: matchInfo.question,
+          total: fullQues.length,
+        },
       };
     }
   } catch (error) {

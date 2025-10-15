@@ -107,7 +107,6 @@ const deleteMatch = async (req, res) => {
       const response = await handleDeleteMatch(user);
 
       if (response.success) {
-        console.log("running");
         res.clearCookie("match", {
           httpOnly: true,
           maxAge: 60 * 60 * 1000,
